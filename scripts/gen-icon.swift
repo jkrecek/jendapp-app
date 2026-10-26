@@ -91,10 +91,10 @@ func art(_ ctx: CGContext, _ rect: CGRect) {
     }
     ctx.strokePath()
     // Little pink paws tucked under the chin
-    for x in [0.445, 0.555] as [CGFloat] {
-        oval(box(x, 0.245, 0.075, 0.055), skin)
-        for t in [-0.022, 0.0, 0.022] as [CGFloat] {
-            oval(box(x + t, 0.268, 0.020, 0.020), skin)
+    for x in [0.43, 0.57] as [CGFloat] {
+        oval(box(x, 0.25, 0.11, 0.08), skin)
+        for t in [-0.032, 0.0, 0.032] as [CGFloat] {
+            oval(box(x + t, 0.285, 0.032, 0.032), skin)
         }
     }
 }
