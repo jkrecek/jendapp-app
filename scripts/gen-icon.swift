@@ -8,77 +8,56 @@ let out = URL(fileURLWithPath: "App/Assets.xcassets/AppIcon.appiconset")
 try FileManager.default.createDirectory(at: out, withIntermediateDirectories: true)
 
 func art(_ ctx: CGContext, _ rect: CGRect) {
-    // Background: soft sky gradient
-    let colors = [NSColor(red: 0.42, green: 0.36, blue: 0.93, alpha: 1).cgColor,
-                  NSColor(red: 0.30, green: 0.78, blue: 0.86, alpha: 1).cgColor] as CFArray
+    // Background: deep indigo → teal
+    let colors = [NSColor(red: 0.17, green: 0.19, blue: 0.45, alpha: 1).cgColor,
+                  NSColor(red: 0.11, green: 0.45, blue: 0.52, alpha: 1).cgColor] as CFArray
     let gradient = CGGradient(colorsSpace: CGColorSpaceCreateDeviceRGB(), colors: colors, locations: [0, 1])!
     ctx.drawLinearGradient(gradient, start: CGPoint(x: rect.minX, y: rect.maxY), end: CGPoint(x: rect.maxX, y: rect.minY), options: [])
 
-    // Hamster, drawn in a 0…1 unit space (origin bottom-left)
+    // Hamster head in a 0…1 unit space (origin bottom-left): flat, two-tone, no outlines
     let u = rect.width
-    func pt(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: rect.minX + x * u, y: rect.minY + y * u) }
-    func oval(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat, _ color: NSColor) {
+    func box(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> CGRect {
+        CGRect(x: rect.minX + (x - w / 2) * u, y: rect.minY + (y - h / 2) * u, width: w * u, height: h * u)
+    }
+    func oval(_ r: CGRect, _ color: NSColor) {
         ctx.setFillColor(color.cgColor)
-        ctx.fillEllipse(in: CGRect(x: rect.minX + (x - w / 2) * u, y: rect.minY + (y - h / 2) * u, width: w * u, height: h * u))
+        ctx.fillEllipse(in: r)
     }
-    let fur = NSColor(red: 0.96, green: 0.66, blue: 0.33, alpha: 1)
-    let furDark = NSColor(red: 0.86, green: 0.52, blue: 0.22, alpha: 1)
-    let cream = NSColor(red: 1.00, green: 0.95, blue: 0.86, alpha: 1)
-    let pink = NSColor(red: 0.97, green: 0.62, blue: 0.70, alpha: 1)
-    let ink = NSColor(red: 0.16, green: 0.11, blue: 0.10, alpha: 1)
+    let fur = NSColor(red: 0.95, green: 0.70, blue: 0.45, alpha: 1)
+    let furShade = NSColor(red: 0.84, green: 0.56, blue: 0.34, alpha: 1)
+    let cream = NSColor(red: 0.99, green: 0.94, blue: 0.87, alpha: 1)
+    let ink = NSColor(red: 0.13, green: 0.10, blue: 0.11, alpha: 1)
 
-    // Soft shadow under the body
-    oval(0.50, 0.08, 0.80, 0.10, NSColor(white: 0, alpha: 0.12))
-    // Ears (behind the body)
-    for x in [0.27, 0.73] as [CGFloat] {
-        oval(x, 0.72, 0.20, 0.20, furDark)
-        oval(x, 0.72, 0.12, 0.12, pink)
+    // Ears
+    for x in [0.355, 0.645] as [CGFloat] {
+        oval(box(x, 0.715, 0.13, 0.14), fur)
+        oval(box(x, 0.712, 0.065, 0.075), furShade)
     }
-    // Body / head: one chubby blob
-    oval(0.50, 0.42, 0.80, 0.68, fur)
-    // Cream face + belly
-    oval(0.50, 0.34, 0.60, 0.50, cream)
-    oval(0.33, 0.45, 0.26, 0.20, cream) // puffy cheeks
-    oval(0.67, 0.45, 0.26, 0.20, cream)
-    // Eyes with highlights
-    for x in [0.38, 0.62] as [CGFloat] {
-        oval(x, 0.53, 0.085, 0.095, ink)
-        oval(x - 0.017, 0.555, 0.030, 0.030, .white)
-        oval(x + 0.020, 0.515, 0.013, 0.013, .white)
-    }
-    // Blush
-    oval(0.27, 0.43, 0.11, 0.065, pink.withAlphaComponent(0.75))
-    oval(0.73, 0.43, 0.11, 0.065, pink.withAlphaComponent(0.75))
-    // Nose
-    oval(0.50, 0.475, 0.050, 0.034, NSColor(red: 0.90, green: 0.45, blue: 0.55, alpha: 1))
-    // Mouth: a little "w"
-    ctx.setStrokeColor(ink.cgColor)
-    ctx.setLineWidth(0.011 * u)
-    ctx.setLineCap(.round)
-    ctx.setLineJoin(.round)
-    ctx.beginPath()
-    ctx.move(to: pt(0.455, 0.445))
-    ctx.addQuadCurve(to: pt(0.50, 0.445), control: pt(0.477, 0.415))
-    ctx.addQuadCurve(to: pt(0.545, 0.445), control: pt(0.523, 0.415))
-    ctx.strokePath()
-    // Sunflower seed held in two paws
+    // Head: a crown plus two full cheeks → the hamster's pear shape
+    let head = CGMutablePath()
+    head.addEllipse(in: box(0.50, 0.545, 0.46, 0.40))
+    head.addEllipse(in: box(0.33, 0.405, 0.40, 0.36))
+    head.addEllipse(in: box(0.67, 0.405, 0.40, 0.36))
+    head.addEllipse(in: box(0.50, 0.35, 0.56, 0.30))
+    ctx.addPath(head)
+    ctx.setFillColor(fur.cgColor)
+    ctx.fillPath(using: .winding)
+    // Cream jaw and cheeks, clipped to the head
     ctx.saveGState()
-    ctx.translateBy(x: pt(0.50, 0.30).x, y: pt(0.50, 0.30).y)
-    ctx.rotate(by: -0.35)
-    let seed = CGRect(x: -0.05 * u, y: -0.085 * u, width: 0.10 * u, height: 0.17 * u)
-    ctx.setFillColor(NSColor(red: 0.28, green: 0.25, blue: 0.27, alpha: 1).cgColor)
-    ctx.fillEllipse(in: seed)
-    ctx.setStrokeColor(NSColor(white: 0.92, alpha: 1).cgColor)
-    ctx.setLineWidth(0.010 * u)
-    for dx in [-0.022, 0.022] as [CGFloat] {
-        ctx.beginPath()
-        ctx.move(to: CGPoint(x: dx * u, y: -0.06 * u))
-        ctx.addLine(to: CGPoint(x: dx * u, y: 0.06 * u))
-        ctx.strokePath()
-    }
+    ctx.addPath(head)
+    ctx.clip(using: .winding)
+    oval(box(0.325, 0.36, 0.28, 0.22), cream) // cheek pouches
+    oval(box(0.675, 0.36, 0.28, 0.22), cream)
+    oval(box(0.50, 0.305, 0.36, 0.18), cream) // chin
+    oval(box(0.50, 0.435, 0.19, 0.17), cream) // muzzle
     ctx.restoreGState()
-    oval(0.43, 0.26, 0.10, 0.075, furDark)
-    oval(0.57, 0.26, 0.10, 0.075, furDark)
+    // Eyes
+    for x in [0.40, 0.60] as [CGFloat] {
+        oval(box(x, 0.53, 0.050, 0.058), ink)
+        oval(box(x - 0.010, 0.543, 0.016, 0.016), NSColor(white: 1, alpha: 0.9))
+    }
+    // Nose
+    oval(box(0.50, 0.47, 0.040, 0.027), NSColor(red: 0.80, green: 0.45, blue: 0.48, alpha: 1))
 }
 
 func render(_ px: Int, mac: Bool, alpha: Bool) -> Data {
