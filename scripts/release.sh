@@ -1,5 +1,8 @@
 #!/bin/sh
-# Archive and upload Jendapp to App Store Connect (TestFlight).
+# Local fallback: archive and upload Jendapp to App Store Connect (TestFlight).
+# Normal releases: push to the `release` branch and Xcode Cloud builds both platforms.
+# Uploading from here uses a timestamp build number, which is higher than Xcode Cloud's counter;
+# afterwards raise Xcode Cloud's next build number above it (macOS build numbers must keep increasing).
 #
 #   scripts/release.sh            # iOS + macOS, upload
 #   scripts/release.sh ios        # one platform

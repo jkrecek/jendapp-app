@@ -10,6 +10,10 @@ Targets: `Jendapp_iOS`, `Jendapp_macOS`, plus a Share extension for each (share 
 Signing uses `DEVELOPMENT_TEAM` in `project.yml`, which the App Group (`group.cz.frca.jendapp`) shared by the app and Share extension requires.
 
 
-## Release (TestFlight)
-`scripts/release.sh [ios|macos|all]` archives and uploads with the Apple ID signed in to Xcode (team 3UP4RLUQBT). Builds are numbered by timestamp, and TestFlight builds expire after 90 days. `UPLOAD=0` only exports locally.
+## Branches & release (TestFlight)
+- `dev` is where work happens. Pushing to `release` makes Xcode Cloud build iOS + macOS and send them to TestFlight internal testing:
+  `git push origin dev:release`
+- `ci_scripts/ci_post_clone.sh` installs XcodeGen and generates the project, because `Jendapp.xcodeproj` isn't committed. Xcode Cloud sets the build number.
+- TestFlight builds expire after 90 days, so release at least that often.
+- `scripts/release.sh` is a local fallback (Apple ID signed in to Xcode, team 3UP4RLUQBT). See its header for the build-number caveat.
 Regenerate the icon with `swift scripts/gen-icon.swift`.
