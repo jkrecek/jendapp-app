@@ -1,0 +1,76 @@
+# Generate the Xcode project: `xcodegen` (in this directory).
+name: Jendapp
+options:
+  bundleIdPrefix: cz.frca
+  deploymentTarget:
+    iOS: "26.0"
+    macOS: "26.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: 3UP4RLUQBT # Jan Krecek (Individual)
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+
+targets:
+  Jendapp:
+    type: application
+    platform: [iOS, macOS]
+    sources: [App, Shared]
+    dependencies:
+      - target: Share_${platform}
+    settings:
+      base:
+        PRODUCT_NAME: Jendapp
+        PRODUCT_BUNDLE_IDENTIFIER: cz.frca.jendapp
+        CODE_SIGN_ENTITLEMENTS: Config/App-${platform}.entitlements
+        TARGETED_DEVICE_FAMILY: "1,2"
+    info:
+      path: Config/App-${platform}-Info.plist
+      properties:
+        CFBundleDisplayName: Jendapp
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        ITSAppUsesNonExemptEncryption: false
+        LSApplicationCategoryType: public.app-category.productivity
+        UILaunchScreen: {}
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: true
+        UISupportedInterfaceOrientations:
+          [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        UISupportedInterfaceOrientations~ipad:
+          [UIInterfaceOrientationPortrait, UIInterfaceOrientationPortraitUpsideDown, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        CFBundleURLTypes:
+          - CFBundleURLName: cz.frca.jendapp
+            CFBundleURLSchemes: [jendapp]
+
+  Share:
+    type: app-extension
+    platform: [iOS, macOS]
+    sources: [Share/Common, "Share/${platform}", Shared]
+    settings:
+      base:
+        PRODUCT_NAME: Share
+        PRODUCT_BUNDLE_IDENTIFIER: cz.frca.jendapp.share
+        CODE_SIGN_ENTITLEMENTS: Config/Share-${platform}.entitlements
+        TARGETED_DEVICE_FAMILY: "1,2"
+    info:
+      path: Config/Share-${platform}-Info.plist
+      properties:
+        CFBundleDisplayName: Jendapp
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule:
+              NSExtensionActivationSupportsFileWithMaxCount: 20
+              NSExtensionActivationSupportsImageWithMaxCount: 20
+              NSExtensionActivationSupportsMovieWithMaxCount: 5
+              NSExtensionActivationSupportsAttachmentsWithMaxCount: 20
