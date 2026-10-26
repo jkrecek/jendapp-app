@@ -27,11 +27,13 @@ func art(_ ctx: CGContext, _ rect: CGRect) {
     let furShade = NSColor(red: 0.84, green: 0.56, blue: 0.34, alpha: 1)
     let cream = NSColor(red: 0.99, green: 0.94, blue: 0.87, alpha: 1)
     let ink = NSColor(red: 0.13, green: 0.10, blue: 0.11, alpha: 1)
+    let skin = NSColor(red: 0.96, green: 0.70, blue: 0.70, alpha: 1) // ears, nose, paws
 
     // Ears
-    for x in [0.355, 0.645] as [CGFloat] {
-        oval(box(x, 0.715, 0.13, 0.14), fur)
-        oval(box(x, 0.712, 0.065, 0.075), furShade)
+    // Ears: round, thin-rimmed, pink inside
+    for x in [0.34, 0.66] as [CGFloat] {
+        oval(box(x, 0.71, 0.14, 0.14), fur)
+        oval(box(x, 0.708, 0.095, 0.095), skin)
     }
     // Head: a crown plus two full cheeks → the hamster's pear shape
     let head = CGMutablePath()
@@ -51,13 +53,50 @@ func art(_ ctx: CGContext, _ rect: CGRect) {
     oval(box(0.50, 0.305, 0.36, 0.18), cream) // chin
     oval(box(0.50, 0.435, 0.19, 0.17), cream) // muzzle
     ctx.restoreGState()
-    // Eyes
-    for x in [0.40, 0.60] as [CGFloat] {
-        oval(box(x, 0.53, 0.050, 0.058), ink)
-        oval(box(x - 0.010, 0.543, 0.016, 0.016), NSColor(white: 1, alpha: 0.9))
+    // Darker golden stripe down the forehead
+    ctx.saveGState()
+    ctx.addPath(head)
+    ctx.clip(using: .winding)
+    oval(box(0.50, 0.70, 0.11, 0.26), furShade.withAlphaComponent(0.4))
+    ctx.restoreGState()
+    // Eyes: big, glossy, set wide
+    for x in [0.385, 0.615] as [CGFloat] {
+        oval(box(x, 0.535, 0.066, 0.072), ink)
+        oval(box(x - 0.013, 0.551, 0.022, 0.022), NSColor(white: 1, alpha: 0.92))
     }
-    // Nose
-    oval(box(0.50, 0.47, 0.040, 0.027), NSColor(red: 0.80, green: 0.45, blue: 0.48, alpha: 1))
+    // Nose and split upper lip
+    oval(box(0.50, 0.468, 0.042, 0.028), skin)
+    ctx.setStrokeColor(furShade.cgColor)
+    ctx.setLineWidth(0.008 * u)
+    ctx.setLineCap(.round)
+    let lip = CGMutablePath()
+    lip.move(to: CGPoint(x: rect.minX + 0.50 * u, y: rect.minY + 0.455 * u))
+    lip.addLine(to: CGPoint(x: rect.minX + 0.50 * u, y: rect.minY + 0.425 * u))
+    lip.move(to: CGPoint(x: rect.minX + 0.47 * u, y: rect.minY + 0.41 * u))
+    lip.addQuadCurve(to: CGPoint(x: rect.minX + 0.50 * u, y: rect.minY + 0.425 * u), control: CGPoint(x: rect.minX + 0.485 * u, y: rect.minY + 0.41 * u))
+    lip.addQuadCurve(to: CGPoint(x: rect.minX + 0.53 * u, y: rect.minY + 0.41 * u), control: CGPoint(x: rect.minX + 0.515 * u, y: rect.minY + 0.41 * u))
+    ctx.addPath(lip)
+    ctx.strokePath()
+    // Whiskers
+    ctx.setStrokeColor(NSColor(red: 0.62, green: 0.42, blue: 0.30, alpha: 0.55).cgColor)
+    ctx.setLineWidth(0.006 * u)
+    for side in [-1.0, 1.0] as [CGFloat] {
+        for (dy, tilt) in [(0.02, 0.05), (0.0, 0.0), (-0.02, -0.05)] as [(CGFloat, CGFloat)] {
+            let w = CGMutablePath()
+            w.move(to: CGPoint(x: rect.minX + (0.50 + side * 0.07) * u, y: rect.minY + (0.445 + dy) * u))
+            w.addQuadCurve(to: CGPoint(x: rect.minX + (0.50 + side * 0.30) * u, y: rect.minY + (0.445 + dy + tilt) * u),
+                           control: CGPoint(x: rect.minX + (0.50 + side * 0.19) * u, y: rect.minY + (0.455 + dy + tilt * 0.4) * u))
+            ctx.addPath(w)
+        }
+    }
+    ctx.strokePath()
+    // Little pink paws tucked under the chin
+    for x in [0.445, 0.555] as [CGFloat] {
+        oval(box(x, 0.245, 0.075, 0.055), skin)
+        for t in [-0.022, 0.0, 0.022] as [CGFloat] {
+            oval(box(x + t, 0.268, 0.020, 0.020), skin)
+        }
+    }
 }
 
 func render(_ px: Int, mac: Bool, alpha: Bool) -> Data {
