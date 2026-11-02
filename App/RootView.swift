@@ -21,6 +21,7 @@ struct RootView: View {
 
 enum Route: Hashable {
     case module(ModuleInfo)
+    case view(ModuleInfo, ViewSpec)
     case chat(ModuleInfo, sessionID: String?)
     case action(ModuleInfo, prompt: String, confirm: ActionConfirm?)
     case job(Job)
@@ -31,6 +32,7 @@ extension View {
         navigationDestination(for: Route.self) { route in
             switch route {
             case .module(let m): ModuleView(module: m)
+            case .view(let m, let v): DataView(module: m, spec: v)
             case .chat(let m, let sid): ChatView(module: m, sessionID: sid)
             case .action(let m, let prompt, let confirm): ChatView(module: m, sessionID: nil, prompt: prompt, confirm: confirm)
             case .job(let j): JobView(job: j)

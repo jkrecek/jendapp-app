@@ -7,8 +7,12 @@ struct ModuleInfo: Codable, Identifiable, Hashable {
     let available: Bool
     let canImport: Bool
     let actions: [ModuleAction]?
+    let views: [ViewSpec]?
+    let operations: [OperationSpec]?
 
     var symbol: String { icon?.isEmpty == false ? icon! : "square.grid.2x2" }
+
+    func operation(_ id: String) -> OperationSpec? { operations?.first { $0.id == id } }
 }
 
 /// One-tap prompt from the module's jendapp.toml; starts a new chat.

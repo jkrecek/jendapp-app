@@ -17,6 +17,8 @@ final class ChatModel {
     var isRunning = false
     /// Sent once when the view first appears (module actions).
     var pendingPrompt: String?
+    /// A job already started elsewhere (a Claude operation) to show first.
+    var pendingJob: Job?
     /// Action follow-up, offered after a run finishes successfully.
     var confirm: ActionConfirm?
     private(set) var canConfirm = false
@@ -47,6 +49,18 @@ final class ChatModel {
         do {
             let job = try await client.chat(module: module.id, message: text, session: sessionID)
             sessionID = job.sessionId
+            try await follow(job.id, client: client)
+        } catch {
+            items.append(ChatItem(role: .notice, text: error.localizedDescription))
+        }
+    }
+
+    /// Shows a job started elsewhere and streams it.
+    func attach(_ job: Job, client: APIClient) async {
+        items.append(ChatItem(role: .user, text: job.prompt))
+        isRunning = true
+        defer { isRunning = false }
+        do {
             try await follow(job.id, client: client)
         } catch {
             items.append(ChatItem(role: .notice, text: error.localizedDescription))
@@ -133,6 +147,13 @@ struct ChatView: View {
         _chat = State(initialValue: chat)
     }
 
+    /// Follows a running job (e.g. a Claude operation); replies continue its session.
+    init(module: ModuleInfo, job: Job) {
+        let chat = ChatModel(module: module, sessionID: job.sessionId)
+        chat.pendingJob = job
+        _chat = State(initialValue: chat)
+    }
+
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
@@ -152,6 +173,11 @@ struct ChatView: View {
         .navigationTitle(chat.module.name)
         .task {
             guard let client = app.client else { return }
+            if let job = chat.pendingJob {
+                chat.pendingJob = nil
+                await chat.attach(job, client: client)
+                return
+            }
             await chat.loadHistory(client)
             if let prompt = chat.pendingPrompt {
                 chat.pendingPrompt = nil

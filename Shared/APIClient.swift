@@ -27,10 +27,10 @@ struct APIClient {
         return r
     }
 
-    private func send<T: Decodable>(_ r: URLRequest) async throws -> T {
+    private func send<T: Decodable>(_ r: URLRequest, decoder: JSONDecoder = .api) async throws -> T {
         let (data, resp) = try await URLSession.shared.data(for: r)
         try Self.check(resp, data)
-        return try JSONDecoder.api.decode(T.self, from: data)
+        return try decoder.decode(T.self, from: data)
     }
 
     private static func check(_ resp: URLResponse, _ data: Data) throws {
@@ -71,6 +71,21 @@ struct APIClient {
 
     func assign(item: String, module: String) async throws -> InboxItem {
         try await post("api/inbox/\(item)/assign", json: ["module_id": module])
+    }
+
+    func viewData(module: String, view: String, params: [String: String]) async throws -> ViewData {
+        var r = request("api/modules/\(module)/views/\(view)")
+        r.url = r.url?.appending(queryItems: params.map { URLQueryItem(name: $0.key, value: $0.value) })
+        return try await send(r, decoder: .moduleData)
+    }
+
+    /// Command operations answer when they finish; Claude operations return the running job.
+    func run(module: String, operation: String, _ body: OperationRequest) async throws -> Job {
+        var r = request("api/modules/\(module)/ops/\(operation)", method: "POST")
+        r.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        r.httpBody = try JSONEncoder().encode(body)
+        r.timeoutInterval = 900 // e.g. a push working through a rate limit
+        return try await send(r)
     }
 
     func chat(module: String, message: String, session: String?) async throws -> Job {

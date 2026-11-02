@@ -33,6 +33,15 @@ struct ModuleView: View {
 
     var body: some View {
         List {
+            if let views = module.views, !views.isEmpty {
+                Section {
+                    ForEach(views) { v in
+                        NavigationLink(value: Route.view(module, v)) {
+                            Label(v.title, systemImage: v.icon ?? "tablecells")
+                        }
+                    }
+                }
+            }
             Section {
                 NavigationLink(value: Route.chat(module, sessionID: nil)) {
                     Label("New chat", systemImage: "plus.bubble")
