@@ -94,24 +94,50 @@ struct DataView: View {
                     Label(note, systemImage: "info.circle").font(.caption).foregroundStyle(.secondary)
                 }
                 if !moduleOps.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ForEach(moduleOps) { op in
-                                Button { trigger(op, row: nil) } label: {
-                                    if running == op.id {
-                                        Label { Text(op.title) } icon: { ProgressView().controlSize(.small) }
-                                    } else {
-                                        Label(op.title, systemImage: op.icon ?? (op.kind == "claude" ? "sparkles" : "bolt"))
-                                    }
-                                }
-                                .buttonStyle(.bordered)
-                                .tint(op.kind == "claude" ? .purple : nil)
+                    // The view's first action is its main one: full width. The rest share an even grid.
+                    VStack(spacing: 8) {
+                        if let main = moduleOps.first {
+                            opButton(main, main: true)
+                        }
+                        let rest = Array(moduleOps.dropFirst())
+                        if !rest.isEmpty {
+                            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                                ForEach(rest) { op in opButton(op, main: false) }
                             }
                         }
                     }
+                    .padding(.vertical, 4)
                     .disabled(running != nil)
                 }
             }
+        }
+    }
+
+    /// Equal-width buttons with the icon and a title that may wrap; Claude operations are tinted purple.
+    @ViewBuilder private func opButton(_ op: OperationSpec, main: Bool) -> some View {
+        let label = HStack(spacing: 6) {
+            if running == op.id {
+                ProgressView().controlSize(.small)
+            } else {
+                Image(systemName: op.icon ?? (op.kind == "claude" ? "sparkles" : "bolt"))
+            }
+            Text(op.title)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.85)
+        }
+        .font(main ? .body.weight(.semibold) : .subheadline)
+        .frame(maxWidth: .infinity, minHeight: main ? 28 : 36)
+
+        if main {
+            Button { trigger(op, row: nil) } label: { label }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(op.kind == "claude" ? .purple : nil)
+        } else {
+            Button { trigger(op, row: nil) } label: { label }
+                .buttonStyle(.bordered)
+                .tint(op.kind == "claude" ? .purple : nil)
         }
     }
 
