@@ -43,6 +43,7 @@ struct DataView: View {
                     groupHeader(group)
                 }
             }
+            emptyState
         }
         .overlay { overlay }
         .navigationTitle(spec.title)
@@ -71,13 +72,15 @@ struct DataView: View {
         if data != nil || !moduleOps.isEmpty {
             Section {
                 if let data, let stats = spec.stats, !stats.isEmpty {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 68), alignment: .leading)], alignment: .leading, spacing: 12) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 68), alignment: .topLeading)], alignment: .leading, spacing: 12) {
                         ForEach(stats, id: \.key) { s in
+                            // Top-aligned: a label that wraps to two lines must not push its number down.
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(ValueFormat.stat(data.summary?[s.key] ?? .null, type: s.type)).lineLimit(1).minimumScaleFactor(0.7)
                                     .font(.title3.weight(.semibold)).monospacedDigit()
-                                Text(s.title).font(.caption).foregroundStyle(.secondary)
+                                Text(s.title).font(.caption).foregroundStyle(.secondary).lineLimit(2)
                             }
+                            .frame(maxWidth: .infinity, alignment: .topLeading)
                         }
                     }
                     .padding(.vertical, 4)
@@ -162,15 +165,25 @@ struct DataView: View {
         }
     }
 
+    /// Covers the whole list only while there is nothing else to show (no header yet).
     @ViewBuilder private var overlay: some View {
         if let error, data == nil {
             ContentUnavailableView("Can't load \(spec.title)", systemImage: "exclamationmark.triangle", description: Text(error))
         } else if data == nil {
             ProgressView()
-        } else if visibleRows.isEmpty {
-            ContentUnavailableView(data!.rows.isEmpty ? "Nothing here" : "Nothing to show",
-                                   systemImage: "tray",
-                                   description: Text(data!.rows.isEmpty ? "" : "\(data!.rows.count) rows are hidden by the filter."))
+        }
+    }
+
+    /// Below the header (stats, notes, operations stay usable), not over it.
+    @ViewBuilder private var emptyState: some View {
+        if let data, visibleRows.isEmpty {
+            Section {
+                ContentUnavailableView(data.rows.isEmpty ? "Nothing here" : "Nothing to show",
+                                       systemImage: "tray",
+                                       description: data.rows.isEmpty ? nil : Text("\(data.rows.count) rows are hidden by the filter."))
+                    .frame(maxWidth: .infinity)
+                    .listRowBackground(Color.clear)
+            }
         }
     }
 
